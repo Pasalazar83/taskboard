@@ -114,6 +114,7 @@ Cada `git push` a la rama `main` se despliega automáticamente (*Auto-Deploy*).
 
 - Consultas SQL parametrizadas y validación de toda entrada (prevención de inyección).
 - Errores genéricos que no exponen detalles internos.
+- Límite de 10 kb en el cuerpo de las peticiones (las más grandes responden 413).
 - CORS restringido al origen definido en `FRONTEND_URL`.
 - Credenciales solo en variables de entorno; `.env` excluido del repositorio.
 

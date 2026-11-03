@@ -7,6 +7,8 @@ const { createApp } = require("./src/app");
 
 async function main() {
   const pool = createPool(config);
+  // Si una conexión inactiva falla, se registra en los logs en lugar de tumbar el proceso
+  pool.on("error", (err) => console.error("Error en la conexión a la base de datos:", err.message));
   await migrate(pool);
 
   const app = createApp({

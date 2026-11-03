@@ -53,6 +53,11 @@ test("POST rechaza JSON inválido (400)", async () => {
   assert.deepEqual(await res.json(), { error: "JSON inválido" });
 });
 
+test("POST rechaza cuerpos de más de 10 kb (413)", async () => {
+  const res = await req("POST", "/api/tasks", { title: "x".repeat(20000) });
+  assert.equal(res.status, 413);
+});
+
 test("GET lista las tareas", async () => {
   const res = await req("GET", "/api/tasks");
   assert.equal(res.status, 200);

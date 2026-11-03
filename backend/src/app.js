@@ -18,7 +18,8 @@ function createApp({ taskRepository, frontendUrl = "", logger = console }) {
   const controller = new TaskController(service);
 
   const app = express();
-  app.use(express.json());
+  // Límite de tamaño del cuerpo: evita peticiones gigantes que saturen el servidor (OWASP)
+  app.use(express.json({ limit: "10kb" }));
   // CORS: solo se permite el frontend; sin FRONTEND_URL se permite cualquier origen (desarrollo)
   app.use(cors({ origin: frontendUrl || "*" }));
 

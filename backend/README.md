@@ -35,7 +35,7 @@ backend/
 │   ├── controllers/TaskController.js Traduce HTTP ⇄ servicio
 │   ├── routes/                       Rutas: info (raíz), health y tasks
 │   └── middlewares/                  asyncHandler, notFound, errorHandler
-├── test/api.test.js                  Pruebas automáticas (13 casos)
+├── test/api.test.js                  Pruebas automáticas (14 casos)
 ├── schema.sql
 └── .env.example
 ```
@@ -52,7 +52,7 @@ Flujo de una petición: **Ruta → Controlador → Servicio → Repositorio → 
 | **I** — Segregación de interfaces | El repositorio expone solo los métodos que el servicio usa (`findAll`, `create`, `setDone`, `toggleDone`, `delete`); el controlador solo conoce el servicio, no el repositorio ni la base de datos. |
 | **D** — Inversión de dependencias | El servicio no crea su repositorio: lo recibe en el constructor. `createApp()` recibe el repositorio desde afuera, y `index.js` (composition root) es el único lugar que conoce PostgreSQL. |
 
-Además se usa un estilo funcional en rutas y *middleware* (funciones de orden superior como `asyncHandler`) y **CORS** restringido al origen de `FRONTEND_URL`.
+Además, el cuerpo de las peticiones se limita a 10 kb (las más grandes responden 413) y se usa un estilo funcional en rutas y *middleware* (funciones de orden superior como `asyncHandler`) y **CORS** restringido al origen de `FRONTEND_URL`.
 
 ## Ejecución local
 

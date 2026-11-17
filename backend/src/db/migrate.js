@@ -1,15 +1,8 @@
-// Crea la tabla si no existe (idempotente).
-const CREATE_TASKS_TABLE = `
-  CREATE TABLE IF NOT EXISTS tasks (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(200) NOT NULL,
-    done BOOLEAN DEFAULT false,
-    created_at TIMESTAMP DEFAULT NOW()
-  )
-`;
-
+const fs = require("node:fs/promises");
+const path = require("node:path");
 async function migrate(pool) {
-  await pool.query(CREATE_TASKS_TABLE);
+  await pool.query(
+    await fs.readFile(path.join(__dirname, "schema-v2.sql"), "utf8"),
+  );
 }
-
 module.exports = { migrate };

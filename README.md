@@ -1,127 +1,80 @@
 # TaskBoard
 
-Gestor de tareas web: permite **crear, listar, marcar como completadas y eliminar tareas**.
-Proyecto del taller de **Ingeniería Web** — Universidad Manuela Beltrán.
+Aplicación personal de tareas para el proyecto de Ingeniería Web. React + Vite, Express y PostgreSQL. Cada cuenta accede únicamente a sus tareas.
 
-| Servicio | URL |
-|---|---|
-| API (backend) | https://taskboard-api-dci1.onrender.com |
-| Estado de la API | https://taskboard-api-dci1.onrender.com/api/health |
-| Aplicación (frontend) | _Pendiente — fase siguiente_ |
+## Funciones
 
-> El plan gratuito de Render suspende el servicio tras un periodo sin uso: la primera petición puede tardar cerca de un minuto.
+- Registro, inicio/cierre de sesión y recuperación de contraseña.
+- Tablero de tres estados y vista de lista; búsqueda, prioridad y filtro de tareas para hoy.
+- Crear, editar, completar, reabrir y eliminar tareas.
+- Descripciones con TinyMCE (texto simple mientras no se configure la clave).
+- Ubicación opcional con Google Maps / Places (New), selección en mapa y enlace al lugar.
+- Clima de la ubicación del dispositivo con OpenWeatherMap. Requiere permiso; se actualiza mientras la aplicación está abierta.
+- Correo desde dav@ingcol.space mediante Zoho Mail HTTPS/OAuth: creación, recuperación y recordatorio.
+- Cola persistida en PostgreSQL y revisión de vencimientos cada 30 segundos mientras el backend esté activo.
 
-## Integrantes
+## Ejecutar
 
-- Pablo Andrés Salazar Salazar
-- José Fernando Téllez Espinosa
-- Juan Davids Traslaviña Lara
+Node.js 22 o posterior.
 
-## Arquitectura
-
-La aplicación se compone de tres servicios independientes desplegados en **Render**, región **Virginia (US East)**:
-
-```
-Navegador ──► Frontend (React + Vite) ──► Backend (Node.js + Express) ──► PostgreSQL
-               Static Site                 Web Service                    Render Postgres
+```sh
+cd backend
+npm ci
+# Copiar .env.example a .env y configurar PostgreSQL
+npm start
 ```
 
-| Componente | Tecnología | Servicio en Render | Responsabilidad |
-|---|---|---|---|
-| Frontend | React + Vite | Static Site | Interfaz de usuario; consume la API con `fetch`. |
-| Backend | Node.js + Express | Web Service (`taskboard-api`) | API REST, validación y reglas de negocio. |
-| Base de datos | PostgreSQL | Render Postgres (`taskboard-db`) | Persistencia de las tareas. |
+En otra terminal:
 
-El backend está organizado en capas según el patrón **MVC** y los principios **SOLID**:
-`Rutas → Controlador → Servicio → Repositorio → PostgreSQL`. Más detalle en [`backend/README.md`](backend/README.md).
-
-## Estructura del repositorio
-
+```sh
+cd frontend
+npm ci
+# Copiar .env.example a .env
+npm run dev
 ```
-taskboard/
-├── backend/     API REST (Node.js + Express + PostgreSQL)
-├── frontend/    Interfaz (React + Vite) — fase siguiente
-└── README.md
+
+Para probar SIN PostgreSQL ni servicios externos: desde backend ejecutar `node scripts/preview.js`. Usa datos temporales en memoria, requiere las dependencias de desarrollo y NO envía correos. Abrir frontend en http://127.0.0.1:5173; crear una cuenta ficticia. Al reiniciar se pierden los datos de esta vista previa.
+
+## Comprobaciones
+
+```sh
+cd backend
+npm test
+cd ../frontend
+npm run build
 ```
+
+Las pruebas verifican rutas HTTP con pg-mem, aislamiento entre cuentas, saneamiento HTML, recuperación de acceso, recordatorios y contratos de Zoho/clima con respuestas simuladas. No sustituyen la validación final contra PostgreSQL real y las cuentas de los proveedores. pg-mem no simula fielmente concurrencia ni rollback.
+
+## Publicación y claves
+
+Seguir [docs/PRESENTACION.md](docs/PRESENTACION.md). Las integraciones están implementadas, pero requieren sus claves y la autorización real de Zoho. No poner secretos en variables VITE_*.
 
 ## API
 
-| Método | Ruta | Descripción | Respuestas |
-|---|---|---|---|
-| GET | `/` | Información de la API y lista de endpoints | 200 |
-| GET | `/api/health` | Estado del servicio | 200 |
-| GET | `/api/tasks` | Lista todas las tareas | 200 |
-| POST | `/api/tasks` | Crea una tarea. Cuerpo: `{"title": "..."}` | 201, 400 |
-| PATCH | `/api/tasks/:id` | Completa o reabre una tarea. Cuerpo: `{"done": true}` | 200, 400, 404 |
-| DELETE | `/api/tasks/:id` | Elimina una tarea | 204, 400, 404 |
+Todas las rutas de tareas, clima y estado de integraciones requieren `Authorization: Bearer <token>`.
 
-## Ejecución local
+| Método | Ruta | Uso |
+| --- | --- | --- |
+| POST | /api/auth/register | name, email, password (10–128 caracteres) |
+| POST | /api/auth/login | email, password |
+| GET | /api/auth/me | Cuenta actual |
+| POST | /api/auth/logout | Revoca sesión |
+| POST | /api/auth/forgot-password | email |
+| POST | /api/auth/reset-password | token, password |
+| GET / POST | /api/tasks | Listar / crear |
+| PATCH / DELETE | /api/tasks/:id | Editar / eliminar tarea propia |
+| GET | /api/weather?lat=4.6&lon=-74.1 | Clima en °C y español |
+| GET | /api/integrations | Disponibilidad de correo y clima |
+| GET | /api/health | Conectividad de la base |
 
-**Requisitos:** Node.js LTS, Git y la *External Database URL* de la base en Render.
+Una tarea admite title, description (HTML saneado), status (pending/progress/done), priority (low/medium/high), due_at (ISO 8601 o null), reminder_minutes (0–10080) y location (null o {label,lat,lng,place_id}).
+PATCH también admite done para compatibilidad. El API v2 exige autenticación; los clientes v1 deben actualizarse.
 
-### Backend
+## Datos y seguridad
 
-```bash
-git clone https://github.com/Pasalazar83/taskboard.git
-cd taskboard/backend
-npm install
-cp .env.example .env        # Windows PowerShell: Copy-Item .env.example .env
-```
+La migración aditiva corre al iniciar. Conserva las tareas antiguas sin dueño (user_id NULL); nunca las asigna automáticamente ni las expone a usuarios nuevos. Las contraseñas usan scrypt con sal; sesiones y tokens de recuperación se guardan con hash SHA-256. Los enlaces vencen en 30 minutos y revocan las sesiones al usarse. Hay límites de solicitudes y HTML permitido por lista. Las sesiones del frontend viven en sessionStorage.
 
-Editar `backend/.env` con la URL de la base de datos y luego:
+Alcance de demostración: registro sin verificación de propiedad del correo, sin equipos ni adjuntos. Antes de abrir el registro al público se debe añadir verificación de email y control de abuso de envíos. La cola usa reintentos y una clave única por tarea/vencimiento; un fallo entre el envío al proveedor y el registro local puede duplicar un correo (entrega al menos una vez, no exactamente una vez). Los recordatorios no corren mientras Render está suspendido; al volver se procesan vencimientos pendientes.
 
-```bash
-npm start                   # http://localhost:3000
-npm test                    # pruebas automáticas (no requieren base de datos)
-```
-
-### Frontend
-
-_Pendiente — se documentará en la fase del frontend._
-
-## Variables de entorno
-
-### Backend (`backend/.env`)
-
-| Variable | Local | Producción (Render) |
-|---|---|---|
-| `DATABASE_URL` | External Database URL | Internal Database URL |
-| `DB_SSL` | `true` | `false` |
-| `FRONTEND_URL` | `http://localhost:5173` | URL del Static Site (sin barra final) |
-| `PORT` | `3000` | Asignada por Render |
-
-### Frontend (`frontend/.env`)
-
-| Variable | Local | Producción (Render) |
-|---|---|---|
-| `VITE_API_URL` | `http://localhost:3000` | `https://taskboard-api-dci1.onrender.com` |
-
-> Los archivos `.env` contienen credenciales y **nunca** se suben al repositorio (están en `.gitignore`).
-
-## Despliegue en Render
-
-| Parámetro | Backend (Web Service) | Frontend (Static Site) |
-|---|---|---|
-| Root Directory | `backend` | `frontend` |
-| Build Command | `npm install` | `npm install && npm run build` |
-| Start / Publish | `npm start` | `dist` |
-| Health Check | `/api/health` | — |
-| Región | Virginia (US East) | Virginia (US East) |
-
-Cada `git push` a la rama `main` se despliega automáticamente (*Auto-Deploy*).
-
-## Seguridad
-
-- Consultas SQL parametrizadas y validación de toda entrada (prevención de inyección).
-- Errores genéricos que no exponen detalles internos.
-- Límite de 10 kb en el cuerpo de las peticiones (las más grandes responden 413).
-- CORS restringido al origen definido en `FRONTEND_URL`.
-- Credenciales solo en variables de entorno; `.env` excluido del repositorio.
-
-## Estado
-
-- [x] Base de datos PostgreSQL en Render
-- [x] Backend con los cinco endpoints, desplegado y probado
-- [x] Arquitectura en capas (MVC + SOLID) y pruebas automáticas
-- [ ] Frontend en React publicado como Static Site
-- [ ] `FRONTEND_URL` configurada en el backend
+El código v1 de controladores/repositorios/rutas se conserva como referencia, pero el punto de entrada activo es src/app.js y las nuevas funciones de src/services.

@@ -127,7 +127,9 @@ test("creación sanea HTML y encola aviso", async () => {
   assert.equal(res.data.notification, "queued");
   assert.ok(!res.data.description.includes("script"));
   assert.equal(res.data.location.label, "Universidad");
-  assert.equal((await pool.query("SELECT * FROM mail_outbox")).rowCount, 1);
+  const kinds = (await pool.query("SELECT kind FROM mail_outbox")).rows.map((r) => r.kind);
+  assert.equal(kinds.filter((k) => k === "created").length, 1);
+  assert.equal(kinds.filter((k) => k === "welcome").length, 2, "un correo de bienvenida por cada cuenta");
 });
 test("otro usuario no puede listar, editar ni borrar tareas ajenas", async () => {
   assert.deepEqual(
@@ -184,6 +186,12 @@ test("completar sincroniza done y permite editar título", async () => {
   assert.equal(res.status, 200);
   assert.equal(res.data.done, true);
   assert.equal(res.data.title, "Presentación lista");
+  const done = await pool.query("SELECT * FROM mail_outbox WHERE kind='completed' AND task_id=$1", [id]);
+  assert.equal(done.rowCount, 1, "encola el aviso de tarea completada");
+  assert.match(done.rows[0].subject, /Tarea completada: Presentación lista/);
+  // Volver a guardarla como completada no repite el correo.
+  await call("PATCH", "/api/tasks/" + id, { title: "Presentación final" }, a.token);
+  assert.equal((await pool.query("SELECT 1 FROM mail_outbox WHERE kind='completed' AND task_id=$1", [id])).rowCount, 1);
 });
 test("tareas completadas no generan recordatorios", async () => {
   const res = await call(
@@ -307,7 +315,7 @@ test("Zoho renueva OAuth, usa HTTPS y reutiliza token", async () => {
       zohoAccountId: "1",
       zohoAccountsUrl: "https://accounts.zoho.com",
       zohoMailUrl: "https://mail.zoho.com",
-      mailFrom: "dav@ingcol.space",
+      mailFrom: "admin@ingcol.space",
     },
     async (url, options) => {
       requests.push({ url, options });
@@ -337,7 +345,7 @@ test("Zoho renueva OAuth, usa HTTPS y reutiliza token", async () => {
   );
   assert.equal(
     JSON.parse(requests[1].options.body).fromAddress,
-    "dav@ingcol.space",
+    "admin@ingcol.space",
   );
 });
 test("clima cacheado por coordenadas, Celsius y español", async () => {

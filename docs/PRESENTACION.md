@@ -55,14 +55,14 @@ Documentación: https://www.tiny.cloud/docs/tinymce/latest/react-ref/
 
 ## 6. Zoho Mail (no SMTP en Render gratuito)
 
-Remitente: dav@ingcol.space. La cuenta que autoriza OAuth debe poder enviar desde esa dirección.
+Remitente: admin@ingcol.space. La cuenta que autoriza OAuth debe poder enviar desde esa dirección.
 
 1. Abrir la consola oficial https://api-console.zoho.com/ correspondiente al centro de datos de la cuenta y crear un cliente apropiado para uso del servidor (Self Client para esta integración propia).
 2. Autorizar el scope mínimo ZohoMail.messages.CREATE. Para consultar el accountId se necesita además el permiso de lectura de cuentas que indique la API oficial (ZohoMail.accounts.READ).
 3. Generar un código de autorización y canjearlo por tokens en el endpoint OAuth oficial. El código es breve y de un solo uso. Guardar el refresh_token como secreto.
-4. Consultar GET /api/accounts con el access token para identificar el accountId de dav@ingcol.space.
+4. Consultar GET /api/accounts con el access token para identificar el accountId de admin@ingcol.space.
 5. Guardar las variables siguientes en el backend de Render:
-   - MAIL_FROM=dav@ingcol.space
+   - MAIL_FROM=admin@ingcol.space
    - ZOHO_CLIENT_ID
    - ZOHO_CLIENT_SECRET
    - ZOHO_REFRESH_TOKEN

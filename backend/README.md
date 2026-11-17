@@ -82,6 +82,20 @@ Flujo de una petición: **Ruta → Middleware de sesión → Controlador → Ser
 - La recuperación no revela si un correo está registrado; el enlace vence en 30 minutos y es de un solo uso.
 - CORS restringido a `FRONTEND_URL`; errores genéricos sin detalles internos.
 
+## Correos
+
+Se envían desde `MAIL_FROM` (por defecto `admin@ingcol.space`) mediante la **API de Zoho Mail con OAuth**, porque el plan gratuito de Render bloquea SMTP:
+
+| Evento | Asunto |
+|---|---|
+| Registro de cuenta | Bienvenido a TaskBoard |
+| Tarea creada | Tarea creada: *título* |
+| Tarea completada | Tarea completada: *título* |
+| Recordatorio | Recordatorio: *título* |
+| Recuperación | Recupera tu acceso a TaskBoard |
+
+Los correos se guardan en la tabla `mail_outbox` dentro de la misma transacción y un proceso los envía cada 30 s, con hasta 5 reintentos. Sin las cuatro variables `ZOHO_*` el envío queda desactivado y la app funciona igual.
+
 ## Ejecución
 
 ```bash

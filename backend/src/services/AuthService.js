@@ -34,6 +34,17 @@ class AuthService {
     try {
       return await transaction(this.pool, async (db) => {
         const user = await this.users.create({ name, email, passwordHash }, db);
+        if (this.mailer.enabled)
+          await this.outbox.enqueue({
+            key: "welcome:" + user.id,
+            recipient: email,
+            subject: "Bienvenido a TaskBoard",
+            content:
+              "Hola " + name + ",\n\nTu cuenta en TaskBoard fue creada con este correo. " +
+              "Ya puedes organizar tus tareas en " + this.frontendUrl + "\n\n" +
+              "Si no creaste esta cuenta, ignora este mensaje.",
+            kind: "welcome",
+          }, db);
         return this.createSession(user, db);
       });
     } catch (e) {

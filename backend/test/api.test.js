@@ -55,6 +55,15 @@ after(async () => {
 });
 test("health comprueba la base", async () =>
   assert.equal((await call("GET", "/api/health")).status, 200));
+test("la ruta raíz describe la API y sus endpoints", async () => {
+  for (const path of ["/", "/api"]) {
+    const res = await call("GET", path);
+    assert.equal(res.status, 200);
+    assert.equal(res.data.name, "TaskBoard API");
+    assert.ok(res.data.endpoints.some((e) => e.path === "/api/tasks"));
+  }
+  assert.equal((await call("GET", "/api/nada")).status, 404);
+});
 test("registro, hash de contraseña y correo normalizado", async () => {
   a = await call("POST", "/api/auth/register", {
     name: "Pablo",

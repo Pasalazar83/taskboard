@@ -1,12 +1,8 @@
-async function enqueue(
-  db,
-  { key, recipient, subject, content, taskId = null, kind = "created" },
-) {
-  await db.query(
-    "INSERT INTO mail_outbox (dedupe_key,recipient,subject,content,task_id,kind) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (dedupe_key) DO NOTHING",
-    [key, recipient, subject, content, taskId, kind],
-  );
-}
+const { MailOutboxRepository } = require("../repositories/MailOutboxRepository");
+
+// Encola un correo usando el repositorio (se mantiene por compatibilidad).
+const enqueue = (db, mail) => new MailOutboxRepository(db).enqueue(mail);
+
 function createNotificationWorker(pool, mailer, logger = console) {
   let busy = false;
   return async function tick() {

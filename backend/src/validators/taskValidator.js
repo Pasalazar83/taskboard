@@ -20,11 +20,4 @@ function validateId(value) {
   return id;
 }
 
-function validateDone(value) {
-  if (value !== undefined && typeof value !== "boolean") {
-    throw new ValidationError("El campo 'done' debe ser booleano");
-  }
-  return value;
-}
-
-module.exports = { validateTitle, validateId, validateDone, MAX_TITLE_LENGTH };
+module.exports = { validateTitle, validateId, MAX_TITLE_LENGTH };

@@ -10,7 +10,7 @@ Aplicación personal de tareas para el proyecto de Ingeniería Web. React + Vite
 - Descripciones con TinyMCE (texto simple mientras no se configure la clave).
 - Ubicación opcional con Google Maps / Places (New), selección en mapa y enlace al lugar.
 - Clima de la ubicación del dispositivo con OpenWeatherMap. Requiere permiso; se actualiza mientras la aplicación está abierta.
-- Correo desde dav@ingcol.space mediante Zoho Mail HTTPS/OAuth: creación, recuperación y recordatorio.
+- Correo desde admin@ingcol.space mediante Zoho Mail HTTPS/OAuth: creación, recuperación y recordatorio.
 - Cola persistida en PostgreSQL y revisión de vencimientos cada 30 segundos mientras el backend esté activo.
 
 ## Ejecutar

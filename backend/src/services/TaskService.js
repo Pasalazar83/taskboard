@@ -47,6 +47,18 @@ class TaskService {
       }
       const updated = await this.tasks.update(id, user.id, taskDetails(changes, current), db);
       await this.outbox.clearPendingReminders(id, db);
+      // Solo avisa cuando la tarea pasa de pendiente/en progreso a completada.
+      if (this.mailer.enabled && current.status !== "done" && updated.status === "done")
+        await this.outbox.enqueue({
+          key: "completed:" + id + ":" + new Date(updated.updated_at).toISOString(),
+          recipient: user.email,
+          subject: "Tarea completada: " + updated.title,
+          content:
+            "Hola " + user.name + ",\n\nMarcaste «" + updated.title + "» como completada. ¡Bien hecho!\n" +
+            this.frontendUrl,
+          taskId: id,
+          kind: "completed",
+        }, db);
       return updated;
     });
   }

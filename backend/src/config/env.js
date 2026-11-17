@@ -14,7 +14,7 @@ module.exports = Object.freeze({
     process.env.ZOHO_ACCOUNTS_URL || "https://accounts.zoho.com",
   ),
   zohoMailUrl: trim(process.env.ZOHO_MAIL_URL || "https://mail.zoho.com"),
-  mailFrom: process.env.MAIL_FROM || "dav@ingcol.space",
+  mailFrom: process.env.MAIL_FROM || "admin@ingcol.space",
   reminderInterval: Math.max(
     10000,
     Number(process.env.REMINDER_INTERVAL_MS) || 30000,
